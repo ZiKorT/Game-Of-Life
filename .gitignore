@@ -1,2 +1,43 @@
+# --- Dossiers de compilation CMake (Générés automatiquement) ---
+cmake-build-debug/
+cmake-build-release/
+cmake-build-*/
+build/
+bin/
+lib/
+_deps/
 
-./idea
+# --- Fichiers temporaires CMake ---
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+*.ninja
+install_manifest.txt
+
+# --- Configuration de l'IDE (CLion / IntelliJ) ---
+# Ce sont tes réglages perso (couleurs, fenêtres), pas ceux du projet
+.idea/
+
+# --- Fichiers binaires et objets compilés ---
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# --- Fichiers générés par le projet (fichiers de sortie) ---
+*_out/
+*.log
+
+# --- Fichiers système Windows/Mac ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Fichiers de configuration utilisateur (Bonus Robustesse) ---
+# On ne veut pas partager ta vitesse de jeu perso sur Git
+config.txt
