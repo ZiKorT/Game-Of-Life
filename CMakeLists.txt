@@ -21,7 +21,7 @@ include_directories(include)
 add_executable(Game_Of_Life
         main.cpp
         src/State.cpp
-        include/State.h
+        src/Rule.cpp
 )
 
 

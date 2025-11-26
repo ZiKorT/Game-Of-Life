@@ -1,4 +1,4 @@
-# --- Dossiers de compilation CMake (Générés automatiquement) ---
+#Dossiers de compilation CMake
 cmake-build-debug/
 cmake-build-release/
 cmake-build-*/
@@ -7,7 +7,7 @@ bin/
 lib/
 _deps/
 
-# --- Fichiers temporaires CMake ---
+#Fichiers temporaires CMake
 CMakeCache.txt
 CMakeFiles/
 Makefile
@@ -15,11 +15,11 @@ Makefile
 *.ninja
 install_manifest.txt
 
-# --- Configuration de l'IDE (CLion / IntelliJ) ---
-# Ce sont tes réglages perso (couleurs, fenêtres), pas ceux du projet
+#Config de l'IDE (CLion / IntelliJ)
+#Réglages perso
 .idea/
 
-# --- Fichiers binaires et objets compilés ---
+#Fichiers binaires et objets compilés
 *.o
 *.obj
 *.exe
@@ -29,15 +29,15 @@ install_manifest.txt
 *.a
 *.lib
 
-# --- Fichiers générés par le projet (fichiers de sortie) ---
+#Fichiers générés par le projet
 *_out/
 *.log
 
-# --- Fichiers système Windows/Mac ---
+#Fichiers système Windows/Mac
 .DS_Store
 Thumbs.db
 Desktop.ini
 
 # --- Fichiers de configuration utilisateur (Bonus Robustesse) ---
-# On ne veut pas partager ta vitesse de jeu perso sur Git
+# On ne veut pas partager la vitesse de jeu perso sur Git
 config.txt
