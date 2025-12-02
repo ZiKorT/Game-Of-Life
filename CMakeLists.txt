@@ -31,6 +31,12 @@ add_executable(Game_Of_Life
 
 target_link_libraries(Game_Of_Life sfml-graphics sfml-window sfml-system)
 
+target_link_options(Game_Of_Life PRIVATE
+        -static-libgcc
+        -static-libstdc++
+        -static
+)
+
 if(WIN32)
     set_target_properties(Game_Of_Life PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
