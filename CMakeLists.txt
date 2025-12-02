@@ -22,6 +22,10 @@ add_executable(Game_Of_Life
         main.cpp
         src/State.cpp
         src/Rule.cpp
+        src/Cell.cpp
+        src/Grid.cpp
+        src/Interface.cpp
+        src/FileManager.cpp
 )
 
 

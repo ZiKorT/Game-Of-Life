@@ -1,7 +1,7 @@
 
 #include "../include/Rule.h"
 
-std::unique_ptr<CellState> ConwayRule::apply(const CellState& currentState, int aliveNeighbors) const {
+std::unique_ptr<CellState> Conway::apply(const CellState& currentState, int aliveNeighbors) const {
     bool currentlyAlive = currentState.estVivant();
 
     if (currentlyAlive && (aliveNeighbors == 2 || aliveNeighbors == 3)) {

@@ -13,7 +13,7 @@ public:
     virtual std::unique_ptr<CellState> apply(const CellState& currentState, int aliveNeighbors) const = 0;
 };
 
-class ConwayRule : public GameRule {
+class Conway : public GameRule {
 public:
     //Renvoie le prochain état d'une ccellule
     std::unique_ptr<CellState> apply(const CellState& currentState, int aliveNeighbors) const override;
