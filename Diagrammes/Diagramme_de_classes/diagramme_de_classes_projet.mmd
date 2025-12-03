@@ -1,0 +1,135 @@
+classDiagram
+%% ============================================
+%%               CELLSTATE + ÉTATS
+%% ============================================
+class CellState {
+    <<abstract>>
+    +~CellState()
+    +bool estVivant() const*
+    +char symbole() const*
+    +unique_ptr<CellState> clone() const*
+}
+
+class AliveState {
+    +bool estVivant() const
+    +char symbole() const
+    +unique_ptr<CellState> clone() const
+}
+
+class DeadState {
+    +bool estVivant() const
+    +char symbole() const
+    +unique_ptr<CellState> clone() const
+}
+
+CellState <|-- AliveState
+CellState <|-- DeadState
+
+
+%% ============================================
+%%                    CELL
+%% ============================================
+class Cell {
+    -unique_ptr<CellState> etat
+    -unique_ptr<CellState> prochainEtat
+    +Cell(bool startAlive=false)
+    +Cell(const Cell& other)
+    +Cell& operator=(const Cell& other)
+    +bool estVivant() const
+    +char symbole() const
+    +void prepareProchainEtat(unique_ptr<CellState> newState)
+    +void majEtat()
+    +const CellState& getState() const
+}
+
+Cell *-- CellState : etat
+Cell *-- CellState : prochainEtat
+
+
+%% ============================================
+%%                GAME RULES
+%% ============================================
+class GameRule {
+    <<abstract>>
+    +~GameRule()
+    +unique_ptr<CellState> apply(const CellState& current, int voisins) const*
+}
+
+class Conway {
+    +unique_ptr<CellState> apply(const CellState& current, int voisins) const
+}
+
+GameRule <|-- Conway
+
+
+%% ============================================
+%%                    GRID
+%% ============================================
+class Grid {
+    -int rows
+    -int cols
+    -vector<vector<Cell>> cells
+    -unique_ptr<GameRule> rule
+    
+    +Grid()
+    +bool loadFile(string filepath)
+    +int compteurVoisin(int x, int y) const
+    +void parcoursGrille()
+    +void update()
+    +int getRows() const
+    +int getCols() const
+    +const Cell& getCell(int x, int y) const
+}
+
+Grid "1" *-- "rows*cols" Cell : contient
+Grid *-- GameRule : utilise règle
+
+
+%% ============================================
+%%               FILE MANAGER
+%% ============================================
+class FileManager {
+    <<static>>
+    +static bool readGridFile(string, int&, int&, vector<vector<int>>&)
+    +static bool writeGridFile(string, int, int, const vector<vector<int>>&)
+    +static bool readConfigInt(string, int&)
+    +static bool writeConfigInt(string, int)
+}
+
+
+%% ============================================
+%%                INTERFACES
+%% ============================================
+class Interface {
+    <<abstract>>
+    +virtual void run() = 0
+}
+
+class ConsoleInterface {
+    -Grid& grid
+    -int iterations
+    -string inputFilename
+
+    +ConsoleInterface(Grid&, int, string)
+    +void run()
+    +void saveIteration(int iter)
+}
+
+class GraphicInterface {
+    -Grid& grid
+    -int cellSize
+    -int executionDelay
+
+    +GraphicInterface(Grid&)
+    +void run()
+}
+
+Interface <|-- ConsoleInterface
+Interface <|-- GraphicInterface
+
+ConsoleInterface --> Grid : référence
+GraphicInterface --> Grid : référence
+
+ConsoleInterface ..> FileManager : sauvegarde fichiers
+Grid ..> FileManager : lecture grille
+GraphicInterface ..> FileManager : config

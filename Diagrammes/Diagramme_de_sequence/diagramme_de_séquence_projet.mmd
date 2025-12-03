@@ -1,0 +1,40 @@
+sequenceDiagram
+    participant M as Main
+    participant G as Grid
+    participant F as FileManager
+    participant I as Interface
+    participant C as Cell
+    participant R as Conway
+
+    M->>G: loadFile(filepath)
+    G->>F: readGridFile(filepath)
+    F-->>G: donnees
+    G->>G: creer cellules
+
+    M->>I: creer interface
+    M->>I: run()
+
+    loop Chaque iteration
+        alt Si ConsoleInterface
+            I->>F: saveIteration()
+        end
+
+        I->>G: parcoursGrille()
+        loop Chaque cellule
+            G->>G: compteurVoisin(x, y)
+            G->>R: apply(state, nbVoisins)
+            R-->>G: nouvelEtat
+            G->>C: prepareProchainEtat()
+        end
+
+        I->>G: update()
+        G->>C: majEtat()
+
+        alt Si GraphicInterface
+            I->>I: afficher SFML
+        end
+    end
+
+    alt Si ConsoleInterface
+        I->>F: saveIteration finale
+    end

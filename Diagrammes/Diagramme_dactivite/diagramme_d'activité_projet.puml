@@ -1,0 +1,56 @@
+@startuml
+start
+
+:Lire les arguments (fichier, mode, itérations);
+
+if (Arguments valides ?) then (non)
+  :Afficher l'usage;
+  stop
+endif
+
+:Charger la grille depuis le fichier;
+
+if (Chargement réussi ?) then (non)
+  :Afficher erreur;
+  stop
+endif
+
+if (Mode ?) then (0 - Console)
+  :Créer dossier de sortie;
+  
+  while (Itérations restantes ?) is (oui)
+    :Sauvegarder l'état actuel dans un fichier;
+    :Parcourir la grille;
+    :Pour chaque cellule, compter les voisins vivants;
+    :Appliquer la règle de Conway;
+    :Stocker le prochain état;
+    :Mettre à jour toutes les cellules;
+  end while (non)
+  
+  :Sauvegarder l'état final;
+  :Afficher "Simulation terminée";
+
+else (1 - Graphique)
+  :Charger la vitesse depuis config.txt;
+  :Ouvrir la fenêtre SFML;
+  
+  while (Fenêtre ouverte ?) is (oui)
+    :Gérer les événements (pause, vitesse);
+    
+    if (En pause ?) then (non)
+      :Parcourir la grille;
+      :Pour chaque cellule, compter les voisins vivants;
+      :Appliquer la règle de Conway;
+      :Stocker le prochain état;
+      :Mettre à jour toutes les cellules;
+      :Attendre (délai d'exécution);
+    endif
+    
+    :Afficher la grille;
+  end while (non)
+  
+  :Sauvegarder la vitesse dans config.txt;
+endif
+
+stop
+@enduml
