@@ -115,6 +115,6 @@ void GraphicInterface::run() {
         window.display();
     }
 
-    // Sauvegarde la vitesse dans config.txt avant de fermer
+    //sauvegarde la vitesse dans config.txt avant de fermer
     FileManager::writeConfigInt("config.txt", executionDelay);
 }
