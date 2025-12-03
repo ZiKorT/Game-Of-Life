@@ -39,8 +39,12 @@ void ConsoleInterface::saveIteration(int iter) {
     for (int i = 0; i < rows; ++i) {
         dataToSave[i].reserve(cols);
         for (int j = 0; j < cols; ++j) {
-            // Conversion Cell en int
-            int val = grid.getCell(i, j).estVivant() ? 1 : 0;
+            //on le remet en int pour le FileManager
+            char sym = grid.getCell(i, j).symbole();
+            int val = 0;
+            if (sym == '1') val = 1;
+            if (sym == '2') val = 2;
+
             dataToSave[i].push_back(val);
         }
     }
@@ -51,7 +55,7 @@ void ConsoleInterface::saveIteration(int iter) {
     }
 }
 
-// --- GRAPHIC IMPLEMENTATION (SFML) ---
+//mode graphique
 
 GraphicInterface::GraphicInterface(Grid& g)
     : grid(g), cellSize(20), executionDelay(100) {
@@ -103,11 +107,18 @@ void GraphicInterface::run() {
 
         for (int i = 0; i < grid.getRows(); ++i) {
             for (int j = 0; j < grid.getCols(); ++j) {
-                if (grid.getCell(i, j).estVivant()) {
+
+                // GESTION COULEURS
+                if (grid.getCell(i, j).estObstacle()) {
+                    cellShape.setFillColor(sf::Color::Red); // OBSTACLE = ROUGE
+                }
+                else if (grid.getCell(i, j).estVivant()) {
                     cellShape.setFillColor(sf::Color::White);
-                } else {
+                }
+                else {
                     cellShape.setFillColor(sf::Color(50, 50, 50));
                 }
+
                 cellShape.setPosition(j * cellSize, i * cellSize);
                 window.draw(cellShape);
             }

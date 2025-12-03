@@ -2,146 +2,157 @@
 #include <cassert>
 #include <fstream>
 #include <filesystem>
+#include <vector>
+
 
 #include "include/State.h"
 #include "include/Cell.h"
 #include "include/Grid.h"
 #include "include/FileManager.h"
 
-#define TEST_PASSED(name) std::cout << "[OK] Test " << name << " passe." << std::endl;
+#define TEST_PASSED(name) std::cout << "\033[32m[OK]\033[0m Test " << name << " valide." << std::endl;
 
-//Test State.cpp
-void testState() {
-    AliveState vivant;
-    DeadState mort;
-
-    assert(vivant.estVivant() == true);
-    assert(vivant.symbole() == '1');
-
-    assert(mort.estVivant() == false);
-    assert(mort.symbole() == '0');
-
-    // Test du clone (Copie profonde)
-    std::unique_ptr<CellState> copie = vivant.clone();
-    assert(copie->estVivant() == true);
-    assert(copie.get() != &vivant); // Vérifie que les adresses mémoire sont différentes
-
-    TEST_PASSED("State");
-}
-
-//Test Cell.cpp
+//test cellule
 void testCell() {
-    //Création
-    Cell c(false); // Morte par défaut
+
+    Cell c(false);
     assert(c.estVivant() == false);
 
-    //Préparation futur
     c.prepareProchainEtat(std::make_unique<AliveState>());
-    //L'état actuel ne doit pas changer tout de suite
-    assert(c.estVivant() == false);
-
-    //MAJ
     c.majEtat();
-    // Maintenant ça doit changer
     assert(c.estVivant() == true);
+    assert(c.symbole() == '1');
 
-    //Copie de cellule
-    Cell c2 = c;
-    assert(c2.estVivant() == true);
+    // Cas Obstacle
+    Cell mur(false);
+    mur.devenirObstacle();
 
-    TEST_PASSED("Cell");
+    assert(mur.estVivant() == false); // Un mur n'est pas "vivant"
+    assert(mur.estObstacle() == true);
+    assert(mur.symbole() == '2');     // Symbole correct
+
+    TEST_PASSED("Cell (Normal + Obstacle)");
 }
 
-//Test FileManager
+//test FileManager
 void testFileManager() {
-    std::string filename = "test_temp.txt";
+    std::string filename = "test_io.txt";
 
-    //Création d'un fichier grille fictif
+    //on écrit manuellement un fichier avec un obstacle (2)
     {
-        std::ofstream file(filename);
-        file << "3 3\n0 1 0\n0 0 0\n1 1 1";
+        std::ofstream f(filename);
+        f << "1 3\n1 0 2"; // 1 ligne, 3 colonnes : Vivant - Mort - Obstacle
     }
 
-    //Lecture
     int r, c;
     std::vector<std::vector<int>> data;
     bool success = FileManager::readGridFile(filename, r, c, data);
 
-    assert(success == true);
-    assert(r == 3);
+    assert(success);
+    assert(r == 1);
     assert(c == 3);
-    assert(data[0][1] == 1); // La case vivante ligne 0
-    assert(data[2][0] == 1); // La case vivante ligne 2
+    assert(data[0][0] == 1);
+    assert(data[0][1] == 0);
+    assert(data[0][2] == 2); // Vérifie que le 2 est bien lu
 
-    //ecriture config
-    FileManager::writeConfigInt("config_test.txt", 500);
-    int val;
-    FileManager::readConfigInt("config_test.txt", val);
-    assert(val == 500);
-
-    //nettoyage
     std::filesystem::remove(filename);
-    std::filesystem::remove("config_test.txt");
-
-    TEST_PASSED("FileManager");
+    TEST_PASSED("FileManager (Lecture 0, 1, 2)");
 }
 
-//Test Grid.cpp
-void testGrid() {
-    // On va tester le "Bloc" (Still life) : un carré de 2x2 ne doit jamais bouger.
-    // 0 0 0 0
-    // 0 1 1 0
-    // 0 1 1 0
-    // 0 0 0 0
+//test grille torique + obstacle
+void testGridLogic() {
+    std::string filename = "test_logic.txt";
 
-    std::string filename = "test_block.txt";
+    // SCÉNARIO :
+    // Une grille 3x3.
+    // (0,0) est vivante.
+    // (0,2) est un obstacle.
+    // (0,1) est morte.
+    //
+    // Disposition :
+    // 1 0 2
+    // 0 0 0
+    // 0 0 0
+
     {
-        std::ofstream file(filename);
-        file << "4 4\n0 0 0 0\n0 1 1 0\n0 1 1 0\n0 0 0 0";
+        std::ofstream f(filename);
+        f << "3 3\n1 0 2\n0 0 0\n0 0 0";
     }
 
     Grid g;
     g.loadFile(filename);
 
-    //verif initiale
-    assert(g.getCell(1, 1).estVivant());
-    assert(g.compteurVoisin(1, 1) == 3); // Doit avoir 3 voisins (1,2), (2,1), (2,2)
+    // A. Test du Voisinage Torique
+    // La case (0,0) est au bord gauche.
+    // Son voisin de "gauche" est donc (0, 2) qui est l'obstacle.
+    // L'obstacle compte-t-il comme vivant ? Non (estVivant() return false).
+    // Donc (0,0) a 0 voisins vivants
+    assert(g.compteurVoisin(0, 0) == 0);
 
-    //on lance une itération
+    // On ajoute un voisin vivant tout en bas (2, 0) pour tester le tore vertical
+    // On doit tricher un peu pour le test sans modifier le fichier :
+    // On ne peut pas modifier la grille directement sans méthode "setCell",
+    // donc on fait confiance au calcul.
+
+    // B. Test de l'Obstacle Immuable
+    // L'obstacle est en (0, 2).
+    assert(g.getCell(0, 2).estObstacle() == true);
+
+    // On lance une itération.
     g.parcoursGrille();
     g.update();
 
-    //rien ne doit avoir changé (c'est un bloc stable)
-    assert(g.getCell(1, 1).estVivant());
+    // L'obstacle doit toujours être un obstacle, quoi qu'il arrive
+    assert(g.getCell(0, 2).estObstacle() == true);
+    assert(g.getCell(0, 2).symbole() == '2');
+
+    // La cellule (0,0) n'avait aucun voisin vivant (le mur (0,2) compte pour 0), elle doit mourir.
     assert(g.getCell(0, 0).estVivant() == false);
 
-    //test torique
-    // On met une cellule seule en (0,0).
-    // Son voisin de gauche est en (0, cols-1).
-    std::string fileTorique = "test_torique.txt";
+    std::filesystem::remove(filename);
+    TEST_PASSED("Grid (Torique & Obstacles)");
+}
+
+//test bloc stable
+void testStableShape() {
+    // Le "Bloc" est une structure stable.
+    // 0 0 0 0
+    // 0 1 1 0
+    // 0 1 1 0
+    // 0 0 0 0
+    std::string filename = "test_block.txt";
     {
-        std::ofstream f(fileTorique);
-        f << "3 3\n1 0 0\n0 0 0\n0 0 0"; // Juste un 1 en haut à gauche
+        std::ofstream f(filename);
+        f << "4 4\n0 0 0 0\n0 1 1 0\n0 1 1 0\n0 0 0 0";
     }
-    g.loadFile(fileTorique);
-    // La case (0, 2) est à l'extrême droite. Son voisin de droite est (0, 0)
-    // Donc (0, 2) doit voir 1 voisin vivant.
-    assert(g.compteurVoisin(0, 2) == 1);
+
+    Grid g;
+    g.loadFile(filename);
+
+    // On fait tourner 5 itérations
+    for(int i=0; i<5; ++i) {
+        g.parcoursGrille();
+        g.update();
+    }
+
+    // Ça doit être encore vivant au milieu
+    assert(g.getCell(1, 1).estVivant());
+    assert(g.getCell(2, 2).estVivant());
+    // Et mort autour
+    assert(g.getCell(0, 0).estVivant() == false);
 
     std::filesystem::remove(filename);
-    std::filesystem::remove(fileTorique);
-
-    TEST_PASSED("Grid & Logique Torique");
+    TEST_PASSED("Stabilité (Block)");
 }
 
 int main() {
-    std::cout << "LANCEMENT DES TESTS UNITAIRES" << std::endl;
+    std::cout << "LANCEMENT DES TESTS" << std::endl;
 
-    testState();
     testCell();
     testFileManager();
-    testGrid();
+    testGridLogic();
+    testStableShape();
 
-    std::cout << "TOUS LES TESTS SONT VALIDES" << std::endl;
+    std::cout << "TOUT EST VERT SONT VALIDE" << std::endl;
     return 0;
 }

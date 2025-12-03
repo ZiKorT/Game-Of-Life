@@ -18,6 +18,10 @@ public:
     bool estVivant() const;
     char symbole() const;
 
+    void devenirObstacle();
+
+    bool estObstacle() const;
+
     void prepareProchainEtat(std::unique_ptr<CellState> newState);
     void majEtat();
     const CellState& getState() const;

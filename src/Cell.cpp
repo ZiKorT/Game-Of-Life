@@ -37,6 +37,14 @@ char Cell::symbole() const {
     return etat->symbole();
 }
 
+void Cell::devenirObstacle() {
+    etat = std::make_unique<ObstacleState>();
+    prochainEtat = etat->clone();
+}
+
+bool Cell::estObstacle() const {
+    return etat->estStatique();
+}
 
 void Cell::prepareProchainEtat(std::unique_ptr<CellState> newState) {
     prochainEtat = std::move(newState);
