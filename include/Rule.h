@@ -2,7 +2,7 @@
 // Created by ZiKor on 26/11/2025.
 //
 
-#ifndef RULE_HPP
+#pragma once
 #define RULE_HPP
 
 #include "State.h"
@@ -18,5 +18,3 @@ public:
     //Renvoie le prochain état d'une ccellule
     std::unique_ptr<CellState> apply(const CellState& currentState, int aliveNeighbors) const override;
 };
-
-#endif

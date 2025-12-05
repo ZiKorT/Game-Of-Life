@@ -1,4 +1,4 @@
-#ifndef FILEMANAGER_H
+#pragma once
 #define FILEMANAGER_H
 
 #include <string>
@@ -18,5 +18,3 @@ public:
     // Ecrit une valeur dans le fichier config
     static bool writeConfigInt(const std::string& filepath, int value);
 };
-
-#endif

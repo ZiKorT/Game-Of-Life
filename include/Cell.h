@@ -1,4 +1,4 @@
-#ifndef CELL_H
+#pragma once
 #define CELL_H
 
 #include "State.h"
@@ -26,5 +26,3 @@ public:
     void majEtat();
     const CellState& getState() const;
 };
-
-#endif

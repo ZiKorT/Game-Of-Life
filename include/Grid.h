@@ -1,4 +1,4 @@
-#ifndef GRID_H
+#pragma once
 #define GRID_H
 
 #include <vector>
@@ -31,5 +31,3 @@ public:
     //pour les tests
     bool operator==(const Grid& other) const;
 };
-
-#endif

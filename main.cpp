@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
         console.run();
     }
     else if (mode == 1) {
-        // --- MODE GRAPHIQUE ---
+        //Mode graphique
         GraphicInterface gui(grid);
         gui.run();
     }

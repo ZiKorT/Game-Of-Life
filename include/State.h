@@ -1,4 +1,4 @@
-#ifndef STATE_H
+#pragma once
 #define STATE_H
 
 #include <memory>
@@ -38,4 +38,3 @@ public:
     // C'est lui qui est statique !
     bool estStatique() const override { return true; }
 };
-#endif

@@ -1,4 +1,4 @@
-#ifndef INTERFACE_HPP
+#pragma once
 #define INTERFACE_HPP
 
 #include "Grid.h"
@@ -34,5 +34,3 @@ public:
     GraphicInterface(Grid& g);
     void run() override;
 };
-
-#endif

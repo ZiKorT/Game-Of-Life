@@ -1,13 +1,12 @@
 classDiagram
-%% ============================================
-%%               CELLSTATE + ÉTATS
-%% ============================================
+
 class CellState {
     <<abstract>>
     +~CellState()
     +bool estVivant() const*
     +char symbole() const*
     +unique_ptr<CellState> clone() const*
+    +bool estStatique() const
 }
 
 class AliveState {
@@ -22,13 +21,18 @@ class DeadState {
     +unique_ptr<CellState> clone() const
 }
 
+class ObstacleState {
+    +bool estVivant() const
+    +char symbole() const
+    +unique_ptr<CellState> clone() const
+    +bool estStatique() const
+}
+
 CellState <|-- AliveState
 CellState <|-- DeadState
+CellState <|-- ObstacleState
 
 
-%% ============================================
-%%                    CELL
-%% ============================================
 class Cell {
     -unique_ptr<CellState> etat
     -unique_ptr<CellState> prochainEtat
@@ -37,6 +41,8 @@ class Cell {
     +Cell& operator=(const Cell& other)
     +bool estVivant() const
     +char symbole() const
+    +void devenirObstacle()
+    +bool estObstacle() const
     +void prepareProchainEtat(unique_ptr<CellState> newState)
     +void majEtat()
     +const CellState& getState() const
@@ -46,9 +52,6 @@ Cell *-- CellState : etat
 Cell *-- CellState : prochainEtat
 
 
-%% ============================================
-%%                GAME RULES
-%% ============================================
 class GameRule {
     <<abstract>>
     +~GameRule()
@@ -62,9 +65,6 @@ class Conway {
 GameRule <|-- Conway
 
 
-%% ============================================
-%%                    GRID
-%% ============================================
 class Grid {
     -int rows
     -int cols
@@ -85,9 +85,6 @@ Grid "1" *-- "rows*cols" Cell : contient
 Grid *-- GameRule : utilise règle
 
 
-%% ============================================
-%%               FILE MANAGER
-%% ============================================
 class FileManager {
     <<static>>
     +static bool readGridFile(string, int&, int&, vector<vector<int>>&)
@@ -97,9 +94,6 @@ class FileManager {
 }
 
 
-%% ============================================
-%%                INTERFACES
-%% ============================================
 class Interface {
     <<abstract>>
     +virtual void run() = 0
@@ -131,5 +125,5 @@ ConsoleInterface --> Grid : référence
 GraphicInterface --> Grid : référence
 
 ConsoleInterface ..> FileManager : sauvegarde fichiers
-Grid ..> FileManager : lecture grille
+Grid .. > FileManager : lecture grille
 GraphicInterface ..> FileManager : config
