@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de la Vie - Projet POO</title>
+    <meta name="description" content="Portage Web et Documentation du projet C++ Jeu de la Vie">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .cpp-keyword { color: #c678dd; }
+        .cpp-type { color: #e5c07b; }
+        .cpp-func { color: #61afef; }
+        .cpp-string { color: #98c379; }
+        .cpp-comment { color: #7f848e; font-style: italic; }
+
+        canvas {
+            image-rendering: pixelated; /* Important pour le look "Retro/SFML" */
+            box-shadow: 0 0 0 1px #334155; /* Bordure subtile */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-700 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-dna text-blue-500 text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-tight">Projet POO <span class="text-slate-400 font-normal">| Jeu de la Vie</span></h1>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium">
+                <a href="#simulation" class="hover:text-blue-400 transition-colors">Simulation</a>
+                <a href="#architecture" class="hover:text-blue-400 transition-colors">Architecture C++</a>
+                <a href="#files" class="hover:text-blue-400 transition-colors">Fichiers</a>
+            </nav>
+            <!-- Lien Github -->
+            <a href="https://github.com/ZiKorT/Game-Of-Life" target="_blank" class="text-slate-400 hover:text-white transition-colors" title="Voir le dépôt">
+                <i class="fa-brands fa-github text-2xl"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 space-y-12">
+
+        <!-- Section 1: Web Simulation -->
+        <section id="simulation" class="grid lg:grid-cols-3 gap-8">
+            <!-- Game Canvas Container -->
+            <div class="lg:col-span-2 flex flex-col items-center justify-start bg-slate-900/50 rounded-xl p-4 border border-slate-700 shadow-xl overflow-hidden">
+                <!-- Wrapper scrollable pour garantir le pixel-perfect sans écrasement -->
+                <div class="w-full overflow-x-auto flex justify-center pb-2">
+                    <canvas id="gameCanvas" class="bg-black rounded shadow-2xl flex-shrink-0"></canvas>
+                </div>
+                
+                <div class="w-full flex justify-end items-center mt-3 px-1">
+                    <div class="text-xs text-slate-300 bg-slate-800 px-3 py-1 rounded border border-slate-700">
+                        Génération: <span id="genCount" class="text-blue-400 font-bold font-mono">0</span> | 
+                        Vivants: <span id="aliveCount" class="text-green-400 font-bold font-mono">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="space-y-6">
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg sticky top-24">
+                    <h2 class="text-lg font-semibold mb-6 flex items-center gap-2 border-b border-slate-700 pb-2">
+                        <i class="fa-solid fa-gamepad text-blue-400"></i> Contrôles
+                    </h2>
+                    
+                    <!-- Main Actions -->
+                    <div class="grid grid-cols-2 gap-3 mb-8">
+                        <button id="btnPlay" class="col-span-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+                            <i class="fa-solid fa-play"></i> LANCER
+                        </button>
+                        <button id="btnNext" class="bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded-lg transition-all text-sm font-medium">
+                            <i class="fa-solid fa-forward-step"></i> +1 Étape
+                        </button>
+                        <button id="btnRandom" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm transition-all font-medium">
+                            <i class="fa-solid fa-dice"></i> Aléatoire
+                        </button>
+                        <button id="btnClear" class="col-span-2 mt-1 bg-red-900/30 hover:bg-red-900/50 text-red-300 border border-red-900/50 py-2 rounded-lg transition-all text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-trash"></i> Tout effacer
+                        </button>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="space-y-6">
+                        <!-- Speed -->
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Vitesse</label>
+                                <span class="text-xs font-mono text-blue-400"><span id="speedVal">100</span>ms</span>
+                            </div>
+                            <input type="range" id="speedRange" min="10" max="1000" step="10" value="100" class="w-full accent-blue-500 bg-slate-900 h-2 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Drawing Tools -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Outils de dessin</label>
+                            <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700">
+                                <button class="tool-btn flex-1 py-2 rounded text-sm font-medium bg-slate-700 text-white shadow transition-all" data-tool="1">
+                                    <div class="w-3 h-3 bg-white inline-block mr-1 border border-gray-400"></div> Vivant
+                                </button>
+                                <button class="tool-btn flex-1 py-2 rounded text-sm font-medium text-slate-400 hover:text-slate-200 transition-all" data-tool="2">
+                                    <div class="w-3 h-3 bg-red-600 inline-block mr-1 border border-red-800"></div> Mur
+                                </button>
+                                <button class="tool-btn flex-1 py-2 rounded text-sm font-medium text-slate-400 hover:text-slate-200 transition-all" data-tool="0">
+                                    <i class="fa-solid fa-eraser text-xs mr-1"></i> Gomme
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-2 text-center">
+                                <i class="fa-regular fa-hand-pointer"></i> Cliquez ou glissez sur la grille pour dessiner
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Architecture Documentation -->
+        <section id="architecture" class="space-y-12 py-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Architecture & Conception C++</h2>
+                <div class="h-1 w-20 bg-blue-500 mx-auto rounded mb-6"></div>
+                <p class="text-slate-400 text-lg leading-relaxed">
+                    L'objectif principal de ce projet n'est pas seulement la simulation, mais la mise en œuvre de 
+                    <span class="text-blue-400 font-semibold">Design Patterns</span> robustes. 
+                    Le code est structuré pour maximiser la modularité, faciliter la maintenance et optimiser la mémoire.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                
+                <!-- Card 1: State Pattern -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden hover:border-blue-500/50 transition-all duration-300 shadow-lg group">
+                    <div class="p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-blue-900/20 rounded-xl flex items-center justify-center group-hover:bg-blue-900/40 transition-colors">
+                                <i class="fa-solid fa-network-wired text-blue-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">State Pattern (État)</h3>
+                        </div>
+                        
+                        <p class="text-slate-300 mb-6 leading-relaxed">
+                            Plutôt que d'utiliser des drapeaux booléens (`isAlive`, `isObstacle`) et des conditions imbriquées, chaque état est encapsulé dans sa propre classe. 
+                            La classe <code>Cell</code> délègue son comportement à un objet polymorphe <code>CellState</code>.
+                        </p>
+
+                        <ul class="text-sm text-slate-400 mb-6 space-y-2">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-blue-500"></i> Extensibilité (ajout facile d'état "Malade" ou "Zombie")</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-blue-500"></i> Code plus propre (pas de switch/case géant)</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-blue-500"></i> Utilisation de <code>std::unique_ptr</code> pour la gestion mémoire</li>
+                        </ul>
+
+                        <div class="code-block text-xs border-t border-slate-700 pt-4 mt-auto">
+                            <div class="text-slate-500 text-[10px] mb-2 font-bold uppercase">Extrait : State.h / State.cpp</div>
+<pre class="whitespace-pre"><span class="cpp-comment">// Classe abstraite pure</span>
+<span class="cpp-keyword">class</span> <span class="cpp-type">CellState</span> {
+  <span class="cpp-keyword">public</span>:
+    <span class="cpp-keyword">virtual bool</span> <span class="cpp-func">estVivant</span>() <span class="cpp-keyword">const</span> = 0;
+    <span class="cpp-keyword">virtual</span> std::unique_ptr&lt;<span class="cpp-type">CellState</span>&gt; <span class="cpp-func">clone</span>() <span class="cpp-keyword">const</span> = 0;
+};
+
+<span class="cpp-comment">// Implémentation concrète</span>
+<span class="cpp-keyword">class</span> <span class="cpp-type">AliveState</span> : <span class="cpp-keyword">public</span> <span class="cpp-type">CellState</span> {
+    <span class="cpp-keyword">bool</span> <span class="cpp-func">estVivant</span>() <span class="cpp-keyword">const override</span> { <span class="cpp-keyword">return true</span>; }
+};</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Strategy Pattern -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden hover:border-purple-500/50 transition-all duration-300 shadow-lg group">
+                    <div class="p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-purple-900/20 rounded-xl flex items-center justify-center group-hover:bg-purple-900/40 transition-colors">
+                                <i class="fa-solid fa-chess-board text-purple-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">Strategy Pattern (Règles)</h3>
+                        </div>
+                        
+                        <p class="text-slate-300 mb-6 leading-relaxed">
+                            La logique de survie (Conway) est séparée du moteur de la grille. La classe <code>Grid</code> possède une référence vers une <code>Rule</code> abstraite. 
+                            Cela permet de changer les règles du jeu à la volée (ex: HighLife, Day & Night) sans modifier le code de la grille.
+                        </p>
+
+                        <ul class="text-sm text-slate-400 mb-6 space-y-2">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-500"></i> Injection de dépendance</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple-500"></i> Respect du principe Open/Closed (SOLID)</li>
+                        </ul>
+
+                        <div class="code-block text-xs border-t border-slate-700 pt-4 mt-auto">
+                            <div class="text-slate-500 text-[10px] mb-2 font-bold uppercase">Extrait : Rule.cpp</div>
+<pre class="whitespace-pre"><span class="cpp-comment">// Application des règles de Conway</span>
+std::unique_ptr&lt;<span class="cpp-type">CellState</span>&gt; <span class="cpp-type">Conway</span>::<span class="cpp-func">apply</span>(...) <span class="cpp-keyword">const</span> {
+    <span class="cpp-keyword">if</span> (aliveNeighbors == 3)
+        <span class="cpp-keyword">return</span> std::make_unique&lt;<span class="cpp-type">AliveState</span>&gt;();
+    <span class="cpp-keyword">else if</span> (aliveNeighbors == 2 && isAlive)
+        <span class="cpp-keyword">return</span> std::make_unique&lt;<span class="cpp-type">AliveState</span>&gt;();
+    
+    <span class="cpp-keyword">return</span> std::make_unique&lt;<span class="cpp-type">DeadState</span>&gt;();
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Toric Grid & Optimization -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden hover:border-green-500/50 transition-all duration-300 shadow-lg group">
+                    <div class="p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-green-900/20 rounded-xl flex items-center justify-center group-hover:bg-green-900/40 transition-colors">
+                                <i class="fa-solid fa-globe text-green-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">Topologie & Optimisation</h3>
+                        </div>
+                        
+                        <p class="text-slate-300 mb-6 leading-relaxed">
+                            La grille est <strong>torique</strong> : les bords sont connectés (comme Pac-Man). 
+                            De plus, une optimisation majeure est implémentée pour les obstacles : ils sont détectés avant le calcul des voisins, évitant des cycles CPU inutiles.
+                        </p>
+
+                        <ul class="text-sm text-slate-400 mb-6 space-y-2">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Arithmétique modulaire pour le voisinage</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> "Early exit" pour les cellules statiques</li>
+                        </ul>
+
+                        <div class="code-block text-xs border-t border-slate-700 pt-4 mt-auto">
+                            <div class="text-slate-500 text-[10px] mb-2 font-bold uppercase">Extrait : Grid.cpp</div>
+<pre class="whitespace-pre"><span class="cpp-comment">// Gestion des voisins toriques (wrap-around)</span>
+<span class="cpp-keyword">int</span> nx = (x + dx + rows) % rows;
+<span class="cpp-keyword">int</span> ny = (y + dy + cols) % cols;
+
+<span class="cpp-comment">// Optimisation : on ignore les obstacles</span>
+<span class="cpp-keyword">if</span> (cells[i][j].estObstacle()) {
+    <span class="cpp-comment">// Clone l'état actuel sans calcul</span>
+    cells[i][j].prepareProchainEtat(...); 
+    <span class="cpp-keyword">continue</span>;
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: MVC & Double Buffering -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden hover:border-yellow-500/50 transition-all duration-300 shadow-lg group">
+                    <div class="p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-yellow-900/20 rounded-xl flex items-center justify-center group-hover:bg-yellow-900/40 transition-colors">
+                                <i class="fa-solid fa-layer-group text-yellow-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">Double Buffering & Vue</h3>
+                        </div>
+                        
+                        <p class="text-slate-300 mb-6 leading-relaxed">
+                            Pour éviter que la modification d'une cellule n'affecte ses voisins dans la même génération, chaque cellule possède un pointeur <code>prochainEtat</code>. 
+                            La mise à jour se fait en deux passes : calcul (`parcoursGrille`) puis validation (`update`).
+                            De plus, la logique (`Grid`) est totalement découplée de l'affichage (`Interface`).
+                        </p>
+
+                        <div class="code-block text-xs border-t border-slate-700 pt-4 mt-auto">
+                            <div class="text-slate-500 text-[10px] mb-2 font-bold uppercase">Extrait : Cell.cpp</div>
+<pre class="whitespace-pre"><span class="cpp-keyword">void</span> <span class="cpp-type">Cell</span>::<span class="cpp-func">majEtat</span>() {
+    <span class="cpp-comment">// Commit : le futur devient le présent</span>
+    <span class="cpp-keyword">if</span> (prochainEtat) {
+        etat = std::move(prochainEtat);
+        prochainEtat = etat->clone();
+    }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 3: Project Structure & Logic -->
+        <section id="files" class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+            <!-- Header Unifié -->
+            <div class="px-6 py-4 bg-slate-900/80 border-b border-slate-700 flex items-center gap-3">
+                <div class="p-2 bg-blue-500/10 rounded-lg">
+                    <i class="fa-solid fa-folder-tree text-blue-400"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Structure du Projet & Fonctionnement</h3>
+            </div>
+            
+            <div class="p-6 lg:p-8">
+                <div class="grid lg:grid-cols-2 gap-12">
+                    
+                    <!-- Colonne 1 : Fichiers -->
+                    <div>
+                        <h4 class="text-blue-400 font-bold uppercase text-xs tracking-wider mb-6 flex items-center gap-2">
+                            <i class="fa-regular fa-file-code"></i> Fichiers Sources (.cpp)
+                        </h4>
+                        <div class="space-y-4">
+                            <!-- Main -->
+                            <div class="group flex gap-4 items-start p-3 rounded-lg hover:bg-slate-700/30 transition-colors border border-transparent hover:border-slate-700">
+                                <span class="font-mono text-sm font-bold text-white min-w-[100px] text-right">main.cpp</span>
+                                <p class="text-sm text-slate-400 leading-snug">
+                                    Point d'entrée. Configure la grille et lance l'interface choisie (Console ou Graphique).
+                                </p>
+                            </div>
+                            <!-- Grid -->
+                            <div class="group flex gap-4 items-start p-3 rounded-lg hover:bg-slate-700/30 transition-colors border border-transparent hover:border-slate-700">
+                                <span class="font-mono text-sm font-bold text-white min-w-[100px] text-right">Grid.cpp</span>
+                                <p class="text-sm text-slate-400 leading-snug">
+                                    Cœur de la simulation. Contient la matrice de <code>Cell</code> et gère la logique torique et les voisins.
+                                </p>
+                            </div>
+                            <!-- Cell -->
+                            <div class="group flex gap-4 items-start p-3 rounded-lg hover:bg-slate-700/30 transition-colors border border-transparent hover:border-slate-700">
+                                <span class="font-mono text-sm font-bold text-white min-w-[100px] text-right">Cell.cpp</span>
+                                <p class="text-sm text-slate-400 leading-snug">
+                                    Élément individuel. Utilise le <em>State Pattern</em> pour définir son comportement (Vivant/Mort/Obstacle).
+                                </p>
+                            </div>
+                            <!-- Interface -->
+                            <div class="group flex gap-4 items-start p-3 rounded-lg hover:bg-slate-700/30 transition-colors border border-transparent hover:border-slate-700">
+                                <span class="font-mono text-sm font-bold text-white min-w-[100px] text-right">Interface.cpp</span>
+                                <p class="text-sm text-slate-400 leading-snug">
+                                    Gère le rendu visuel. Sépare la logique de calcul de l'affichage (SFML).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colonne 2 : Logique -->
+                    <div>
+                        <h4 class="text-purple-400 font-bold uppercase text-xs tracking-wider mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-gears"></i> Boucle du Moteur
+                        </h4>
+                        
+                        <div class="relative border-l-2 border-slate-700 ml-3 space-y-8 py-2">
+                            <!-- Step 1 -->
+                            <div class="relative pl-8">
+                                <span class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-purple-500 box-border"></span>
+                                <h5 class="text-white font-bold text-sm">1. Initialisation</h5>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Lecture du fichier texte. Les '2' deviennent des obstacles (murs indestructibles), les '1' des cellules vivantes.
+                                </p>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="relative pl-8">
+                                <span class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-purple-500 box-border"></span>
+                                <h5 class="text-white font-bold text-sm">2. Calcul (Double Buffering)</h5>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    La grille calcule l'état <code>t+1</code> de chaque cellule et le stocke dans <code>prochainEtat</code>. L'état actuel <code>t</code> n'est pas modifié pendant cette phase.
+                                </p>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="relative pl-8">
+                                <span class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-purple-500 box-border"></span>
+                                <h5 class="text-white font-bold text-sm">3. Mise à jour (Commit)</h5>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Une fois le calcul fini sur toute la grille, <code>Grid::update()</code> échange les pointeurs : le futur devient le présent.
+                                </p>
+                            </div>
+                            <!-- Step 4 -->
+                            <div class="relative pl-8">
+                                <span class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-purple-500 box-border"></span>
+                                <h5 class="text-white font-bold text-sm">4. Rendu SFML</h5>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    L'interface dessine la grille. Grâce au découplage, on pourrait changer SFML pour une vue Console sans toucher à la logique.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800 bg-slate-900 mt-auto py-8">
+        <div class="container mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>&copy; 2025 Projet Jeu de la Vie. Code source C++ original par l'étudiant.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- CONSTANTES & CONFIG ---
+        const COLS = 40; // Nombre de colonnes
+        const ROWS = 25; // Nombre de lignes
+        const CELL_SIZE = 20; // Taille en pixels (SFML standard)
+        
+        // États comme définis dans State.cpp / Interface.cpp
+        const STATE_DEAD = 0;
+        const STATE_ALIVE = 1;
+        const STATE_OBSTACLE = 2;
+
+        // Couleurs exactes de Interface.cpp
+        // "sf::Color(50, 50, 50)" pour les mortes
+        // "sf::Color::White" pour les vivantes
+        // "sf::Color::Red" pour les obstacles
+        // Le fond du canvas sera NOIR (sf::Color::Black) pour créer l'interstice
+        const COLOR_DEAD = 'rgb(50, 50, 50)';
+        const COLOR_ALIVE = '#FFFFFF';
+        const COLOR_OBSTACLE = '#FF0000';
+        const COLOR_BG = '#000000'; 
+
+        // --- MOTEUR DU JEU ---
+        class GameEngine {
+            constructor(rows, cols) {
+                this.rows = rows;
+                this.cols = cols;
+                this.grid = this.createGrid();
+                this.generation = 0;
+            }
+
+            createGrid() {
+                return Array(this.rows).fill().map(() => Array(this.cols).fill(STATE_DEAD));
+            }
+
+            countNeighbors(x, y) {
+                let count = 0;
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        if (dx === 0 && dy === 0) continue;
+                        
+                        const nx = (x + dx + this.rows) % this.rows;
+                        const ny = (y + dy + this.cols) % this.cols;
+                        
+                        if (this.grid[nx][ny] === STATE_ALIVE) {
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            }
+
+            step() {
+                const nextGrid = this.createGrid();
+                let aliveCount = 0;
+
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        const cellState = this.grid[i][j];
+
+                        if (cellState === STATE_OBSTACLE) {
+                            nextGrid[i][j] = STATE_OBSTACLE;
+                            continue;
+                        }
+
+                        const neighbors = this.countNeighbors(i, j);
+
+                        if (cellState === STATE_ALIVE) {
+                            if (neighbors === 2 || neighbors === 3) {
+                                nextGrid[i][j] = STATE_ALIVE;
+                                aliveCount++;
+                            } else {
+                                nextGrid[i][j] = STATE_DEAD;
+                            }
+                        } else { // STATE_DEAD
+                            if (neighbors === 3) {
+                                nextGrid[i][j] = STATE_ALIVE;
+                                aliveCount++;
+                            } else {
+                                nextGrid[i][j] = STATE_DEAD;
+                            }
+                        }
+                    }
+                }
+
+                this.grid = nextGrid;
+                this.generation++;
+                return aliveCount;
+            }
+
+            randomize() {
+                this.generation = 0;
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        const rand = Math.random();
+                        if (rand < 0.2) this.grid[i][j] = STATE_ALIVE;
+                        else if (rand < 0.25) this.grid[i][j] = STATE_OBSTACLE;
+                        else this.grid[i][j] = STATE_DEAD;
+                    }
+                }
+            }
+
+            clear() {
+                this.generation = 0;
+                this.grid = this.createGrid();
+            }
+        }
+
+        // --- UI & RENDU ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const engine = new GameEngine(ROWS, COLS);
+        
+        let isPlaying = false;
+        let animationId = null;
+        let lastTime = 0;
+        let speed = 100;
+        let currentTool = STATE_ALIVE;
+
+        // Configuration de la taille du canvas
+        // On fixe la taille pour correspondre exactement aux pixels SFML
+        canvas.width = COLS * CELL_SIZE;
+        canvas.height = ROWS * CELL_SIZE;
+
+        function draw() {
+            // 1. Fond Noir (comme window.clear(sf::Color::Black))
+            ctx.fillStyle = COLOR_BG;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let aliveCount = 0;
+
+            for (let i = 0; i < engine.rows; i++) {
+                for (let j = 0; j < engine.cols; j++) {
+                    const state = engine.grid[i][j];
+                    
+                    // Déterminer la couleur
+                    let fill = COLOR_DEAD;
+                    if (state === STATE_ALIVE) {
+                        fill = COLOR_ALIVE;
+                        aliveCount++;
+                    } else if (state === STATE_OBSTACLE) {
+                        fill = COLOR_OBSTACLE;
+                    }
+
+                    ctx.fillStyle = fill;
+
+                    // SFML Logic: sf::RectangleShape(sf::Vector2f(cellSize - 1.0f, cellSize - 1.0f));
+                    // Cela crée un carré de 19x19 pixels (si cell=20)
+                    // Positionné en (j*20, i*20)
+                    // Le pixel restant (le 20ème) reste noir (couleur de fond), créant la grille.
+                    const size = CELL_SIZE - 1; 
+                    ctx.fillRect(j * CELL_SIZE, i * CELL_SIZE, size, size);
+                }
+            }
+
+            // UI Update
+            document.getElementById('genCount').innerText = engine.generation;
+            document.getElementById('aliveCount').innerText = aliveCount;
+        }
+
+        function loop(timestamp) {
+            if (!isPlaying) return;
+
+            if (timestamp - lastTime > speed) {
+                engine.step();
+                draw();
+                lastTime = timestamp;
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- EVENTS ---
+
+        const btnPlay = document.getElementById('btnPlay');
+        btnPlay.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.innerHTML = '<i class="fa-solid fa-pause"></i> PAUSE';
+                btnPlay.classList.replace('bg-blue-600', 'bg-yellow-600');
+                btnPlay.classList.replace('hover:bg-blue-500', 'hover:bg-yellow-500');
+                lastTime = performance.now();
+                loop(lastTime);
+            } else {
+                btnPlay.innerHTML = '<i class="fa-solid fa-play"></i> LANCER';
+                btnPlay.classList.replace('bg-yellow-600', 'bg-blue-600');
+                btnPlay.classList.replace('hover:bg-yellow-500', 'hover:bg-blue-500');
+                cancelAnimationFrame(animationId);
+            }
+        });
+
+        document.getElementById('btnNext').addEventListener('click', () => {
+            if (isPlaying) return;
+            engine.step();
+            draw();
+        });
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            btnPlay.innerHTML = '<i class="fa-solid fa-play"></i> LANCER';
+            btnPlay.classList.replace('bg-yellow-600', 'bg-blue-600');
+            engine.clear();
+            draw();
+        });
+
+        document.getElementById('btnRandom').addEventListener('click', () => {
+            engine.randomize();
+            draw();
+        });
+
+        const speedRange = document.getElementById('speedRange');
+        const speedVal = document.getElementById('speedVal');
+        speedRange.addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            speedVal.innerText = speed;
+        });
+
+        const tools = document.querySelectorAll('.tool-btn');
+        tools.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tools.forEach(t => {
+                    t.classList.remove('bg-slate-700', 'text-white', 'shadow');
+                    t.classList.add('text-slate-400');
+                });
+                btn.classList.add('bg-slate-700', 'text-white', 'shadow');
+                btn.classList.remove('text-slate-400');
+                currentTool = parseInt(btn.dataset.tool);
+            });
+        });
+
+        // Mouse Drawing Logic
+        let isDrawing = false;
+        
+        function getGridPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Facteur d'échelle car le canvas est responsive en CSS mais fixe en résolution interne
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const x = (evt.clientX - rect.left) * scaleX;
+            const y = (evt.clientY - rect.top) * scaleY;
+            
+            return {
+                c: Math.floor(x / CELL_SIZE),
+                r: Math.floor(y / CELL_SIZE)
+            };
+        }
+
+        function paint(e) {
+            if (!isDrawing) return;
+            const pos = getGridPos(e);
+            if (pos.r >= 0 && pos.r < engine.rows && pos.c >= 0 && pos.c < engine.cols) {
+                engine.grid[pos.r][pos.c] = currentTool;
+                draw();
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
+        canvas.addEventListener('mousemove', paint);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+        // Init
+        engine.randomize();
+        draw();
+
+    </script>
+</body>
+</html>
